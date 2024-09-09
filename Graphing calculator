@@ -1,0 +1,132 @@
+import 'package:flutter/material.dart';
+import 'dart:math';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Graphing calculator',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: GraphingCalculator(),
+    );
+  }
+}
+
+class GraphingCalculator extends StatefulWidget {
+  @override
+  _GraphingCalculatorState createState() => _GraphingCalculatorState();
+}
+
+class _GraphingCalculatorState extends State<GraphingCalculator> {
+  String _functionInput = '';
+  List<Point> _graphData = [];
+
+  void _updateGraphData() {
+    _graphData = [];
+    for (double x = -10; x <= 10; x += 0.1) {
+      double y = _evaluateFunction(_functionInput, x);
+      _graphData.add(Point(x, y));
+    }
+  }
+
+  double _evaluateFunction(String input, double x) {
+    if (input.isEmpty) {
+      return 0;
+    }
+
+    if (input == 'x^2') {
+      return x * x;
+    } else if (input == 'x') {
+      return x;
+    } else if (input == 'x^3') {
+      return x * x * x;
+    }
+
+    return 0; // if not supported
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _updateGraphData(); // Update the chart data at each plotting
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Graphing calculator'),
+      ),
+      body: Row(
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  TextField(
+                    onChanged: (value) {
+                      _functionInput = value; // Updating state without setState
+                      setState(() {}); // Updating the schedule
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Enter a function (for example, x, x^2, x^3)',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: CustomPaint(
+                size: Size.infinite,
+                painter: GraphPainter(_graphData),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class GraphPainter extends CustomPainter {
+  final List<Point> graphData;
+
+  GraphPainter(this.graphData);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.blue
+      ..style = PaintingStyle.stroke;
+
+    final width = size.width;
+    final height = size.height;
+
+    // Axis X
+    canvas.drawLine(Offset(0, height / 2), Offset(width, height / 2), paint);
+    // Axis Y
+    canvas.drawLine(Offset(width / 2, 0), Offset(width / 2, height), paint);
+
+    for (int i = 0; i < graphData.length - 1; i++) {
+      final point1 = graphData[i];
+      final point2 = graphData[i + 1];
+
+      canvas.drawLine(
+        Offset(width / 2 + point1.x * 20, height / 2 - point1.y * 20),
+        Offset(width / 2 + point2.x * 20, height / 2 - point2.y * 20),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
+  }
+}
